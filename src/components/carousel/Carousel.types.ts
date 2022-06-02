@@ -5,4 +5,5 @@ export interface CarouselPropsI {
     nextButtonRef?: RefObject<HTMLElement>,
     previousButtonRef?: RefObject<HTMLElement>,
     selectedKey?: Key,
+    intervalTimer?: number,
 }

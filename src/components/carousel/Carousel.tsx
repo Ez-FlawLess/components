@@ -1,6 +1,8 @@
 import React from "react";
 import { FC, Key, ReactElement, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
+import useRefEvent from "../../hooks/useRefEvent";
+import useTimeout from "../../hooks/useTimeout";
 import { CarouselPropsI } from "./Carousel.types";
 
 const ContainerDiv = styled.div`
@@ -71,23 +73,32 @@ export const Carousel: FC<CarouselPropsI> = props => {
         }
     }, [selectedKey, containerDivRef, selectedDivRef])
 
+    const scrollToPrev = () => {
+        containerDivRef.current?.scrollTo({left: 0, behavior: 'smooth'})
+    }
+
+    const scrollToNext = () => {
+        containerDivRef.current?.scrollTo({left: containerDivRef.current.scrollWidth, behavior: 'smooth'})
+    }
+
+    useRefEvent(props.previousButtonRef, 'click', scrollToPrev)
+
+    useRefEvent(props.nextButtonRef, 'click', scrollToNext)
+
+    useTimeout(scrollToNext, props.intervalTimer, [props.intervalTimer, selectedKey, containerDivRef])
+
     const selectPrev = () => {
         const prevItem = items[prevIndex]
         if (prevItem) setSelectedKey(prevItem.key)
     }
-
-    useRefEvent(props.previousButtonRef, 'click', selectPrev)
 
     const selectNext = () => {
         const nextItem = items[nextIndex]
         if (nextItem) setSelectedKey(nextItem.key)
     }
 
-    useRefEvent(props.nextButtonRef, 'click', selectNext)
-
     const handleContainerOnScrll = () => {
         if (containerDivRef.current?.scrollLeft === 0) return selectPrev()
-        console.log(containerDivRef.current?.scrollLeft, nextDivRef.current?.offsetLeft)
         if (containerDivRef.current && nextDivRef.current && containerDivRef.current?.scrollLeft >= nextDivRef.current?.offsetLeft) return selectNext()
     }
 
@@ -117,16 +128,4 @@ export const Carousel: FC<CarouselPropsI> = props => {
         )
     }
     return <>{props.children}</>
-}
-
-const useRefEvent = <K extends keyof HTMLElementEventMap>(ref: RefObject<HTMLElement> | undefined, event: K, handleEvent: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any) => {
-    useEffect(() => {
-        const current = ref?.current
-        if (current) {
-            current.addEventListener(event, handleEvent)
-            return () => {
-                current.removeEventListener(event, handleEvent)
-            }
-        }
-    }, [event, handleEvent, ref])
 }
