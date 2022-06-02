@@ -6,4 +6,5 @@ export interface CarouselPropsI {
     previousButtonRef?: RefObject<HTMLElement>,
     selectedKey?: Key,
     intervalTimer?: number,
+    onSlide?: (newKey: Key, newIndex: number) => any,
 }

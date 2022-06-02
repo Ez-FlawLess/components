@@ -59,9 +59,12 @@ export const Carousel: FC<CarouselPropsI> = props => {
     useEffect(() => {
         if (Array.isArray(props.children) && props.children[0]) {
             setItems(props.children)
-            setSelectedKey(props.children[0].key)
         }
     }, [props.children])
+
+    useEffect(() => {
+        if (!selectedKey && items.length) setSelectedKey(items[0].key)
+    }, [items, selectedKey])
 
     useEffect(() => {
         if (props.selectedKey) setSelectedKey(props.selectedKey)
@@ -72,6 +75,10 @@ export const Carousel: FC<CarouselPropsI> = props => {
             containerDivRef.current?.scrollTo({left: selectedDivRef.current?.offsetLeft})
         }
     }, [selectedKey, containerDivRef, selectedDivRef])
+
+    useEffect(() => {
+        if (props.onSlide && selectedKey) props.onSlide(selectedKey, index)
+    }, [props.onSlide, index, selectedKey])
 
     const scrollToPrev = () => {
         containerDivRef.current?.scrollTo({left: 0, behavior: 'smooth'})
@@ -107,9 +114,6 @@ export const Carousel: FC<CarouselPropsI> = props => {
             <ContainerDiv
                 ref={containerDivRef}
                 onScroll={handleContainerOnScrll}
-                style={{
-                    
-                }}
             >
                 <ItemDiv>
                     {items[prevIndex]}
