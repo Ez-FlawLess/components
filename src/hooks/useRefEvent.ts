@@ -1,6 +1,6 @@
-import { RefObject, useEffect } from "react"
+import { DependencyList, RefObject, useEffect } from "react"
 
-const useRefEvent = <K extends keyof HTMLElementEventMap>(ref: RefObject<HTMLElement> | undefined, event: K, handleEvent: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any) => {
+const useRefEvent = <K extends keyof HTMLElementEventMap>(ref: RefObject<HTMLElement> | undefined, event: K, handleEvent: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, dep: DependencyList = []) => {
     useEffect(() => {
         const current = ref?.current
         if (current) {
@@ -9,7 +9,7 @@ const useRefEvent = <K extends keyof HTMLElementEventMap>(ref: RefObject<HTMLEle
                 current.removeEventListener(event, handleEvent)
             }
         }
-    }, [event, handleEvent, ref])
+    }, [event, handleEvent, ref, ...dep])
 }
 
 export default useRefEvent

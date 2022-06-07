@@ -58,9 +58,9 @@ export const Carousel: FC<CarouselPropsI> = props => {
 
     useEffect(() => {
         if (Array.isArray(props.children) && props.children[0]) {
-            setItems(props.children)
+            setItems(props.dir === 'rtl' ? props.children.reverse() : props.children)
         }
-    }, [props.children])
+    }, [props.children, props.dir])
 
     useEffect(() => {
         if (!selectedKey && items.length) setSelectedKey(items[0].key)
@@ -88,9 +88,15 @@ export const Carousel: FC<CarouselPropsI> = props => {
         containerDivRef.current?.scrollTo({left: containerDivRef.current.scrollWidth, behavior: 'smooth'})
     }
 
-    useRefEvent(props.previousButtonRef, 'click', scrollToPrev)
+    useRefEvent(props.previousButtonRef, 'click', () => {
+        if (props.dir === 'rtl') scrollToNext()
+        else scrollToPrev()
+    }, [props.dir])
 
-    useRefEvent(props.nextButtonRef, 'click', scrollToNext)
+    useRefEvent(props.nextButtonRef, 'click', () => {
+        if (props.dir === 'rtl') scrollToPrev()
+        else scrollToNext()
+    }, [props.dir])
 
     useTimeout(scrollToNext, props.intervalTimer, [props.intervalTimer, selectedKey, containerDivRef])
 
@@ -112,6 +118,7 @@ export const Carousel: FC<CarouselPropsI> = props => {
     if (index !== -1) {
         return (
             <ContainerDiv
+                dir="ltr"
                 ref={containerDivRef}
                 onScroll={handleContainerOnScrll}
             >

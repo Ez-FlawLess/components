@@ -7,4 +7,5 @@ export interface CarouselPropsI {
     selectedKey?: Key,
     intervalTimer?: number,
     onSlide?: (newKey: Key, newIndex: number) => any,
+    dir?: 'ltr' | 'rtl',
 }
