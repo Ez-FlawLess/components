@@ -40,11 +40,11 @@ export const Carousel: FC<CarouselPropsI> = props => {
     const itemsLength: number = useMemo(() => items.length, [items])
 
     const index: number = useMemo(() => {
-        if (Array.isArray(props.children) && selectedKey ) {
-            return props.children?.findIndex(child => child.key === selectedKey)
+        if (selectedKey ) {
+            return items.findIndex(child => child.key === selectedKey)
         }
         return -1
-    }, [props.children, selectedKey])
+    }, [items, selectedKey])
 
     const prevIndex: number = useMemo(() => {
         if (index === 0) return itemsLength - 1

@@ -17,7 +17,7 @@ const nextSlideButtonRef = useRef<HTMLButtonElement>(null)
 const prevSlideButtonRef = useRef<HTMLButtonElement>(null)
 
 const [key, setKey] = useState<Key | null>(null)
-const [items, setItems] = useState<number>([1,2,3,4,5])
+const [items, setItems] = useState<number[]>([1,2,3,4,5])
 
 return (
     <div style={{position: 'relative'}}>
@@ -26,7 +26,7 @@ return (
         <Carousel
           nextButtonRef={nextSlideButtonRef}
           previousButtonRef={prevSlideButtonRef}
-          onSlide={(newKey, newIndex) => setKey(newKey)}
+          onSlide={(newKey: SetStateAction<Key | null>, newIndex: any) => setKey(newKey)}
         >
         {items.map(item => (
             <div key={item}>
@@ -36,7 +36,7 @@ return (
         </Carousel>
         <div style={{display: 'flex'}}>
           {items.map((item, index) => (
-              <h6 style={{color: item === key ? 'red' : 'black'}}>
+              <h6 key={item} style={{color: item === key ? 'red' : 'black'}}>
                 {index + 1}
               </h6>
           ))}
