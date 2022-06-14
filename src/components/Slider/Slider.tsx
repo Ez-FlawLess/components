@@ -18,13 +18,17 @@ export const Slider: FC<SliderPropsI> = props => {
 
     const childrenLength = useMemo(() => props.children.length, [props.children])
 
-    const selectedIndex: number = useMemo(() => props.children.findIndex(comp => comp.key === selectedKey), [selectedKey])
-    const prevIndex: number = useMemo(() => selectedIndex === 0 ? childrenLength - 1 : selectedIndex - 1, [selectedIndex, childrenLength])
-    const nextIndex: number = useMemo(() => selectedIndex === childrenLength - 1 ? 0 : selectedIndex + 1, [selectedIndex, childrenLength])
+    const selectedIndex = useMemo<number>(() => props.children.findIndex(comp => comp.key === selectedKey), [selectedKey])
+    const prevIndex: number = useMemo<number>(() => selectedIndex === 0 ? childrenLength - 1 : selectedIndex - 1, [selectedIndex, childrenLength])
+    const nextIndex: number = useMemo<number>(() => selectedIndex === childrenLength - 1 ? 0 : selectedIndex + 1, [selectedIndex, childrenLength])
 
     useEffect(() => {
         if (!selectedKey && props.children[0]?.key) setSelectedKey(props.children[0].key)
     }, [props.children, selectedKey])
+
+    useEffect(() => {
+        if (props.onSlide) props.onSlide(selectedKey, selectedIndex)
+    }, [props.onSlide, selectedKey, selectedIndex])
 
     useTimeout(() => {
         setTransitionDuration(0)
