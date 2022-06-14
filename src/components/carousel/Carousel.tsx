@@ -1,32 +1,16 @@
 import React from "react";
-import { FC, Key, ReactElement, RefObject, useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
+import { FC, Key, ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { css } from '@emotion/css'
 import useRefEvent from "../../hooks/useRefEvent";
 import useTimeout from "../../hooks/useTimeout";
 import { CarouselPropsI } from "./Carousel.types";
+import { useWindowResize } from "../../hooks/useWindowResize";
 
-const ContainerDiv = styled.div`
-    overflow-x: scroll;
-    display: flex;
-    flex-wrap: nowrap;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-    scroll-snap-type: x mandatory;
-    ::-webkit-scrollbar {
-        display: none;
-    }
-`
-
-const ItemDiv = styled.div`
-    flex: none;
-    width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+const itemDivClassName = css`
     display: flex;
     justify-content: center;
     items-align: center;
 `
-
 
 export const Carousel: FC<CarouselPropsI> = props => {
 
@@ -36,6 +20,8 @@ export const Carousel: FC<CarouselPropsI> = props => {
 
     const [items, setItems] = useState<ReactElement[]>([])
     const [selectedKey, setSelectedKey] = useState<Key | null>(null)
+
+    const [width, setWidth] = useState<number>(0)
 
     const itemsLength: number = useMemo(() => items.length, [items])
 
@@ -79,6 +65,15 @@ export const Carousel: FC<CarouselPropsI> = props => {
     useEffect(() => {
         if (props.onSlide && selectedKey) props.onSlide(selectedKey, index)
     }, [props.onSlide, index, selectedKey])
+    
+    useEffect(() => {
+        console.log('selected div', selectedDivRef.current?.scrollWidth)
+        setWidth(selectedDivRef.current?.scrollWidth ?? 0)
+    }, [selectedDivRef, index])
+
+    useWindowResize(() => {
+        setWidth(selectedDivRef.current?.clientWidth ?? 0)
+    }, [selectedDivRef])
 
     const scrollToPrev = () => {
         containerDivRef.current?.scrollTo({left: 0, behavior: 'smooth'})
@@ -101,41 +96,62 @@ export const Carousel: FC<CarouselPropsI> = props => {
     useTimeout(scrollToNext, props.intervalTimer, [props.intervalTimer, selectedKey, containerDivRef])
 
     const selectPrev = () => {
-        const prevItem = items[prevIndex]
-        if (prevItem) setSelectedKey(prevItem.key)
+        // const prevItem = items[prevIndex]
+        // if (prevItem) setSelectedKey(prevItem.key)
     }
 
     const selectNext = () => {
-        const nextItem = items[nextIndex]
-        if (nextItem) setSelectedKey(nextItem.key)
+        // const nextItem = items[nextIndex]
+        // if (nextItem) setSelectedKey(nextItem.key)
     }
 
     const handleContainerOnScrll = () => {
+        console.log('on scroll container','scroll left', containerDivRef.current?.scrollLeft, 'scroll width', containerDivRef.current?.scrollWidth )
         if (containerDivRef.current?.scrollLeft === 0) return selectPrev()
         if (containerDivRef.current && nextDivRef.current && containerDivRef.current?.scrollLeft >= nextDivRef.current?.offsetLeft) return selectNext()
     }
 
     if (index !== -1) {
         return (
-            <ContainerDiv
+            <div
+                className={css`
+                    overflow-x: scroll;    
+                    width: ${width ? (width + 'px') : '100%'};
+                `}
                 dir="ltr"
                 ref={containerDivRef}
                 onScroll={handleContainerOnScrll}
             >
-                <ItemDiv>
-                    {items[prevIndex]}
-                </ItemDiv>
-                <ItemDiv
-                    ref={selectedDivRef}
+                <div
+                    className={css`
+                        position: relative;
+                    `}
                 >
-                    {items[index]}
-                </ItemDiv>
-                <ItemDiv
-                    ref={nextDivRef}
-                >
-                    {items[nextIndex]}
-                </ItemDiv>
-            </ContainerDiv>
+                    <div className={itemDivClassName}>
+                        {items[prevIndex]}
+                    </div>
+                    <div
+                        className={itemDivClassName + ' ' + css`
+                            position: absolute;
+                            top: 0;
+                            left: 100%;
+                        `}
+                        ref={selectedDivRef}
+                    >
+                        {items[index]}
+                        <div
+                        className={itemDivClassName + ' ' + css`
+                            position: absolute;
+                            top: 0;
+                            left: 100%;
+                        `}
+                            ref={nextDivRef}
+                        >
+                            {items[nextIndex]}
+                        </div>
+                    </div>
+                </div>
+            </div>
         )
     }
     return <>{props.children}</>
