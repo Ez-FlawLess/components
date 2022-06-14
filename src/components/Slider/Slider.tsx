@@ -1,4 +1,4 @@
-import React, { FC, Key, useEffect, useMemo, useRef, useState } from "react";
+import React, { FC, Key, useEffect, useMemo, useRef, useState, TouchEvent } from "react";
 import { GoToE, SliderPropsI } from "./Slider.types";
 import { css } from '@emotion/css'
 import { SliderItem } from "./SliderItem/SliderItem";
@@ -15,6 +15,7 @@ export const Slider: FC<SliderPropsI> = props => {
     const [translateX, setTranslateX] = useState<number>(0)
     const [transitionDuration, setTransitionDuration] = useState<number>(0)
     const [goTo, setGoTo] = useState<GoToE | null>(null)
+    const [prevTouchPageX, setPrevTouchPageX] = useState<number>(0)
 
     const childrenLength = useMemo(() => props.children.length, [props.children])
 
@@ -72,7 +73,16 @@ export const Slider: FC<SliderPropsI> = props => {
                 else goToNext()
             }
         }
+        setPrevTouchPageX(0)
         setMouseIsDown(false)
+    }
+
+    const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+        if (prevTouchPageX) {
+            const difference = e.touches[0].pageX - prevTouchPageX
+            setTranslateX(prev => prev + difference)
+        }
+        setPrevTouchPageX(e.touches[0].pageX)
     }
 
     return (
@@ -103,7 +113,7 @@ export const Slider: FC<SliderPropsI> = props => {
                 onMouseMove={e => mouseIsDown && setTranslateX(prev => prev + e.movementX)}
                 onTouchStart={handleMouseDown}
                 onTouchEnd={handleMouseUp}
-                onTouchMove={e => console.log(e)}
+                onTouchMove={handleTouchMove}
             >
                 <SliderItem 
                     divRef={prevDivRef}

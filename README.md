@@ -1,8 +1,8 @@
 # components
 
-- [Carousel](#Carousel)
+- [Slider](#Slider)
 
-## Carousel
+## Slider
 
 A slideshow component for cycling through elements—images or slides of text—like a carousel.
 
@@ -23,9 +23,9 @@ return (
     <div style={{position: 'relative'}}>
         <button ref={nextSlideButtonRef} style={{position: 'absolute', top: 50, right: 0,}}>Next</button>
         <button ref={prevSlideButtonRef} style={{position: 'absolute', top: 50, left: 0,}}>prev</button>
-        <Carousel
+        <Slider
           nextButtonRef={nextSlideButtonRef}
-          previousButtonRef={prevSlideButtonRef}
+          prevButtonRef={prevSlideButtonRef}
           onSlide={(newKey: SetStateAction<Key | null>, newIndex: any) => setKey(newKey)}
         >
         {items.map(item => (
@@ -33,7 +33,7 @@ return (
                 {item}
             </div>
         ))}
-        </Carousel>
+        </Slider>
         <div style={{display: 'flex'}}>
           {items.map((item, index) => (
               <h6 key={item} style={{color: item === key ? 'red' : 'black'}}>
