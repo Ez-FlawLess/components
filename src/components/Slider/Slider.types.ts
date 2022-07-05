@@ -4,10 +4,10 @@ export interface SliderPropsI {
     children: ReactElement[],
     nextButtonRef?: RefObject<HTMLElement>,
     prevButtonRef?: RefObject<HTMLElement>,
-    onSlide?: (newKey: Key, newIndex: number) => any,
+    onSlide?: (newIndex: number) => any,
 }
 
-export enum GoToE {
-    next = 'next',
-    prev = 'prev',
+export enum MoveDirE {
+    next,
+    prev,
 }

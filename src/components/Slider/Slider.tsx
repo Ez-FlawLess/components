@@ -1,78 +1,89 @@
-import React, { FC, Key, useEffect, useMemo, useRef, useState, TouchEvent } from "react";
-import { GoToE, SliderPropsI } from "./Slider.types";
+import React, { FC, useEffect, useMemo, useRef, useState, TouchEvent  } from "react";
+import { SliderPropsI } from "./Slider.types";
 import { css } from '@emotion/css'
-import { SliderItem } from "./SliderItem/SliderItem";
-import useTimeout from "../../hooks/useTimeout";
+import { useIsVisible } from "../../hooks/useIsVisible";
 import useRefEvent from "../../hooks/useRefEvent";
 
 export const Slider: FC<SliderPropsI> = props => {
 
-    const prevDivRef = useRef<HTMLDivElement>(null)
-    const selectedDivRef = useRef<HTMLDivElement>(null)
+    const containerDivRef = useRef<HTMLDivElement>(null)
+    const firstDivRef = useRef<HTMLDivElement>(null)
 
-    const [selectedKey, setSelectedKey] = useState<Key>('')
-    const [mouseIsDown, setMouseIsDown] = useState<boolean>(false)
+    const firstCheckDivRef = useRef<HTMLDivElement>(null)
+    const lastCheckDivRef = useRef<HTMLDivElement>(null)
+
     const [translateX, setTranslateX] = useState<number>(0)
-    const [transitionDuration, setTransitionDuration] = useState<number>(0)
-    const [goTo, setGoTo] = useState<GoToE | null>(null)
+    const [index, setIndex] = useState<number>(0)
+    const [resetDuration, setResetDuration] = useState<boolean>(false)
+
     const [prevTouchPageX, setPrevTouchPageX] = useState<number>(0)
 
-    const childrenLength = useMemo(() => props.children.length, [props.children])
+    const [mouseIsDown, setMouseIsDown] = useState<boolean>(false)
 
-    const selectedIndex = useMemo<number>(() => props.children.findIndex(comp => comp.key === selectedKey), [selectedKey])
-    const prevIndex: number = useMemo<number>(() => selectedIndex === 0 ? childrenLength - 1 : selectedIndex - 1, [selectedIndex, childrenLength])
-    const nextIndex: number = useMemo<number>(() => selectedIndex === childrenLength - 1 ? 0 : selectedIndex + 1, [selectedIndex, childrenLength])
-
-    useEffect(() => {
-        if (!selectedKey && props.children[0]?.key) setSelectedKey(props.children[0].key)
-    }, [props.children, selectedKey])
-
-    useEffect(() => {
-        if (props.onSlide) props.onSlide(selectedKey, selectedIndex)
-    }, [props.onSlide, selectedKey, selectedIndex])
-
-    useTimeout(() => {
-        setTransitionDuration(0)
-        setSelectedKey(props.children[goTo === GoToE.next ? nextIndex : prevIndex].key || '')
-        setTranslateX(0)
-        setGoTo(null)
-    }, transitionDuration, [transitionDuration, goTo, props.children])
+    const length = useMemo(() => props.children.length, [props.children])
 
     useRefEvent(props.prevButtonRef, 'click', () => {
-        setTransitionDuration(1500)
-        goToPrev()
-    }, [selectedDivRef])
+        selectPrev()
+    }, [index])
 
     useRefEvent(props.nextButtonRef, 'click', () => {
-        setTransitionDuration(1500)
-        goToNext()
-    }, [prevDivRef])
+        selectNext()
+    }, [index])
 
-    const goToPrev = () => {
-        setTranslateX(selectedDivRef.current?.clientWidth || 0)
-        setGoTo(GoToE.prev)
+    const goToStart = () => {
+        if (containerDivRef.current) {
+            containerDivRef.current.style.transitionDuration = '0s'
+            setIndex(0)
+            setResetDuration(true)
+        } 
     }
 
-    const goToNext = () => {
-        setTranslateX(-(prevDivRef.current?.clientWidth || 0))
-        setGoTo(GoToE.next)
+    const goToEnd = () => {
+        if (containerDivRef.current) {
+            containerDivRef.current.style.transitionDuration = '0s'
+            setIndex(length - 1)
+            setResetDuration(true)
+        }
+    }
+
+    useIsVisible(firstCheckDivRef, () => {
+        if (index === -1) goToEnd()
+    }, [length, index, containerDivRef])
+
+    useIsVisible(lastCheckDivRef, () => {
+        if (index === length) goToStart()
+    }, [length, index, containerDivRef])
+
+    useEffect(() => {
+        if (resetDuration && (index !== 0 && index !== length - 1) && containerDivRef.current) {
+            containerDivRef.current.style.transitionDuration = '1s'
+            setResetDuration(false)
+        }
+    }, [resetDuration, index, length])
+
+    useEffect(() => {
+        if (index > -1 && index < length && props.onSlide) props.onSlide(index)
+    }, [index, props.onSlide, length])
+
+    const selectNext = () => {
+        if (index === length) goToStart()
+        else setIndex(prev => prev + 1)
+    }
+    
+    const selectPrev = () => {
+        if (index === -1) goToEnd()
+        else setIndex(prev => prev - 1)
     }
 
     const handleMouseDown = () => {
+        if (containerDivRef.current) containerDivRef.current.style.transitionDuration = '0s'
         setMouseIsDown(true)
     }
-
     const handleMouseUp = () => {
-        if (mouseIsDown) {
-            if (translateX <= 30 && translateX >= -30) {
-                setTranslateX(0)
-                setTransitionDuration(500)
-            } else {
-                setTransitionDuration(1000)
-                if (translateX > 30) goToPrev()
-                else goToNext()
-            }
-        }
+        if (containerDivRef.current) containerDivRef.current.style.transitionDuration = '1s'
+        if (translateX >= 30) setIndex(prev => prev - 1)
+        else if (translateX <= -30) setIndex(prev => prev + 1)
+        setTranslateX(0)
         setPrevTouchPageX(0)
         setMouseIsDown(false)
     }
@@ -85,65 +96,101 @@ export const Slider: FC<SliderPropsI> = props => {
         setPrevTouchPageX(e.touches[0].pageX)
     }
 
-    if (childrenLength > 1) return (
+    if (length <= 1) return <>{props.children}</>
+    return (
         <div
             className={css`
                 overflow: hidden;
+                ${mouseIsDown ? 'cursor: grabbing !important;' : ''}
+                img {
+                    user-drag: none; 
+                    user-select: none;
+                    -moz-user-select: none;
+                    -webkit-user-drag: none;
+                    -webkit-user-select: none;
+                    -ms-user-select: none;
+                }
             `}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onMouseMove={e => mouseIsDown && setTranslateX(prev => prev + e.movementX)}
+            onTouchStart={handleMouseDown}
+            onTouchEnd={handleMouseUp}
+            onTouchMove={handleTouchMove}
         >
             <div
+                ref={containerDivRef}
+                style={{
+                    transitionProperty: 'transform',
+                    transitionDuration: '1s',
+                    transform: `translateX(calc(${-index}00% + ${translateX}px)`
+                }}
                 className={css`
-                    width: 100%;
                     position: relative;
-                    transform: translateX(${translateX}px);
-                    transition-duration: ${transitionDuration}ms;
-                    ${mouseIsDown ? 'cursor: grabbing !important;' : ''}
-                    img {
-                        user-drag: none; 
-                        user-select: none;
-                        -moz-user-select: none;
-                        -webkit-user-drag: none;
-                        -webkit-user-select: none;
-                        -ms-user-select: none;
-                    }
                 `}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onMouseMove={e => mouseIsDown && setTranslateX(prev => prev + e.movementX)}
-                onTouchStart={handleMouseDown}
-                onTouchEnd={handleMouseUp}
-                onTouchMove={handleTouchMove}
             >
-                <SliderItem 
-                    divRef={prevDivRef}
-                    position="absolute" 
-                    className={`
+                <div 
+                    ref={firstCheckDivRef}
+                    className={css`
+                        position: absolute;
+                        right: calc(200% - 1px);
+                        top: 0;
+                        height: 100%;
+                        width: 1px;
+                        z-index: 10;
+                    `}
+                />
+                <div
+                    className={css`
+                        position: absolute;
+                        width: 100%;
+                        top: 0;
                         right: 100%;
                     `}
                 >
-                    {props.children[prevIndex]}
-                </SliderItem>
-                <SliderItem 
-                    divRef={selectedDivRef}
-                    position="static"
+                    {props.children[length - 1]}
+                </div>
+                <div 
+                    ref={firstDivRef}
                 >
-                    {props.children[selectedIndex]}
-                </SliderItem>
-                <SliderItem 
-                    position="absolute"
-                    className={`
-                        left: 100%;
+                    {props.children[0]}
+                </div>
+                {props.children.slice(1).map((child, index) => (
+                    <div
+                        key={child.key}
+                        className={css`
+                            position: absolute;
+                            width: 100%;
+                            top: 0;
+                            left: ${index + 1}00%;
+                        `}
+                    >
+                        {child}
+                    </div>
+                ))}
+                <div
+                    className={css`
+                        position: absolute;
+                        width: 100%;
+                        top: 0;
+                        left: ${length}00%;
                     `}
                 >
-                    {props.children[nextIndex]}
-                </SliderItem>
+                    {props.children[0]}
+                </div>
+                <div 
+                    ref={lastCheckDivRef}
+                    className={css`
+                        position: absolute;
+                        left: calc(${length + 1}00% - 1px);
+                        top: 0;
+                        height: 100%;
+                        width: 1px;
+                        z-index: 10;
+                    `}
+                />
             </div>
         </div>
-    )
-    return (
-        <>
-            {props.children}
-        </>
     )
 }
