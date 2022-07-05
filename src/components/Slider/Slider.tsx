@@ -36,7 +36,7 @@ export const Slider: FC<SliderPropsI> = props => {
         setSelectedKey(props.children[goTo === GoToE.next ? nextIndex : prevIndex].key || '')
         setTranslateX(0)
         setGoTo(null)
-    }, transitionDuration, [transitionDuration, goTo])
+    }, transitionDuration, [transitionDuration, goTo, props.children])
 
     useRefEvent(props.prevButtonRef, 'click', () => {
         setTransitionDuration(1500)
@@ -85,7 +85,7 @@ export const Slider: FC<SliderPropsI> = props => {
         setPrevTouchPageX(e.touches[0].pageX)
     }
 
-    return (
+    if (childrenLength > 1) return (
         <div
             className={css`
                 overflow: hidden;
@@ -140,5 +140,10 @@ export const Slider: FC<SliderPropsI> = props => {
                 </SliderItem>
             </div>
         </div>
+    )
+    return (
+        <>
+            {props.children}
+        </>
     )
 }
